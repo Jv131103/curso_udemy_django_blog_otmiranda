@@ -1,0 +1,39 @@
+            Criando arquivos requirements.txt e .dockerignore
+
+Dentro da pasta djangoapp, crie o um arquivo requirements.txt e nele faça:
+
+    Django>=5.1.7,<5.2
+    psycopg2-binary>=2.9.10,<2.10
+
+O que quero dizer aqui, é: Quero que a biblioteca atualize suas versões, enquanto for menor
+que a versão que utilizo.
+
+
+Agora na raiz, crie um .dockerignore e faça:
+
+    *.pyc
+    *.pyo
+    *.mo
+    *.db
+    *.css.map
+    *.egg-info
+    *.sql.gz
+    .cache
+    .project
+    .idea
+    .pydevproject
+    .idea/workspace.xml
+    .DS_Store
+    .git/
+    .sass-cache
+    .vagrant/
+    __pycache__
+    dist
+    docs
+    env
+    logs
+    stats
+    Dockerfile
+    __localcode/
+
+

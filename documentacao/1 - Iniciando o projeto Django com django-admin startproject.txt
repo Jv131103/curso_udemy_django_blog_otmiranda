@@ -1,0 +1,18 @@
+            Iniciando o projeto Django com django-admin startproject
+
+
+Como vamos usar Docker, vamos criar uma pasta chamada de djangoapp
+
+Essa pasta será a raiz do projeto django
+
+Agora, entre na pasta no terminal:
+
+    cd djangoapp
+
+Depois inicie seu novo projeto django:
+
+    django-admin startproject project .
+
+Se quiser ver pela sua máquina:
+
+    python djangoapp/manage.py runserver
