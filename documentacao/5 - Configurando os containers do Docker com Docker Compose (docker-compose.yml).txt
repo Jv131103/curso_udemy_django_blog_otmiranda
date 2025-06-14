@@ -1,0 +1,125 @@
+        Configurando os containers do Docker com Docker Compose (docker-compose.yml)
+
+Aqui, vamos montar o docker-compose, ou seja, o que irá subir o nosso container.
+
+Nele vamos fazer o seguinte:
+
+    version: '3.9'
+
+    services:
+    djangoapp:
+        container_name: djangoapp
+        build:
+        context: .
+        ports:
+        - 8000:8000
+        volumes:
+        - ./djangoapp:/djangoapp
+        - ./data/web/static:/data/web/static/
+        - ./data/web/media:/data/web/media/
+        env_file:
+        - ./dotenv_files/.env
+        depends_on:
+        - psql
+    psql:
+        container_name: psql
+        image: postgres:13-alpine
+        volumes:
+        - ./data/postgres/data:/var/lib/postgresql/data/
+        env_file:
+        - ./dotenv_files/.env
+
+Agora, vamos buildar o nosso projeto
+
+    docker compose up --build -d  # Não trava o seu terminal
+
+    ou
+
+    docker compose up --build  # Trava seu terminal, mas útil para ver LOGS
+
+
+Caso já tenha buildado
+
+    docker compose up -d  # Não trava o seu terminal
+
+    ou
+
+    docker compose up  # Trava seu terminal, mas útil para ver LOGS
+
+
+Caso queira desligar:
+
+    docker compose down
+
+
+Porém, precisamos atualizar o .env para rodar corretamente com o Docker.
+
+    SECRET_KEY="ndbgpb9%9+-83)^3*f4_ki8y+rxd+ck4n7ug6-!=nmy(4p&b6d"
+
+    # 0 False, 1 True
+    DEBUG="1"
+
+    # Comma Separated values
+    ALLOWED_HOSTS="127.0.0.1, localhost"
+
+    DB_ENGINE="django.db.backends.postgresql"
+    POSTGRES_DB="blog_base_de_dados"
+    POSTGRES_USER="blog_user"
+    POSTGRES_PASSWORD="blog_user_password"
+    POSTGRES_HOST="psql"
+    POSTGRES_PORT="5432"
+
+Altere também o scripts/commands.sh:
+
+    #!/bin/sh
+
+    # O shell irá encerrar a execução do script quando um comando falhar
+    set -e
+
+    while ! nc -z $POSTGRES_HOST $POSTGRES_PORT; do
+    echo "🟡 Waiting for Postgres Database Startup ($POSTGRES_HOST $POSTGRES_PORT) ..."
+    sleep 2
+    done
+
+    echo "✅ Postgres Database Started Successfully ($POSTGRES_HOST:$POSTGRES_PORT)"
+
+    python manage.py collectstatic --noinput
+    python manage.py makemigrations --noinput
+    python manage.py migrate --noinput
+    python manage.py runserver 0.0.0.0:8000
+
+PS:
+
+    caso dê esse erro: PermissionError: [Errno 13] Permission denied: '/data/web/static/admin'
+
+    Faça no seu host (fora do docker):
+
+        sudo mkdir -p ./data/web/static
+        sudo chmod -R 777 ./data/web/static
+
+        sudo mkdir -p ./data/web/media
+        sudo chmod -R 777 ./data/web/media
+
+Caso queira apagar:
+
+    # Deletar containers
+    docker container ls -a
+
+    docker rm [tres primeiros valores de id] ou [id completo]
+
+    # Listar imagens
+    docker image ls
+
+Caso queira parar o container:
+
+
+    docker container ls
+
+    docker stop [tres primeiros valores de id] ou [id completo]
+
+
+Caso queira testar:
+
+    http://0.0.0.0:8000/  -> Não vai funcionar por enquanto
+
+    http://127.0.0.1:8000/  -> Vai funciopnar, pois está configuradon em ALLOWED_HOSTS

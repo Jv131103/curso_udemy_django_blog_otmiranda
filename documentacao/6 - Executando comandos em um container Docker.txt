@@ -1,0 +1,101 @@
+            Executando comandos em um container Docker
+
+
+Rodando direto:
+
+    docker compose run --rm djangoapp python -V
+
+    docker compose run --rm djangoapp pwd
+
+    docker compose run --rm djangoapp python manage.py makemigrations
+
+    OU SEJA:
+
+        docker compose run --rm <SEU_APP/SEU_PROJETO> <COMANDO>
+
+    Usando o shell:
+
+        docker compose run --rm djangoapp /bin/sh -c 'echo Olá'
+
+        # Ver o PATH do projeto
+        docker compose run --rm djangoapp /bin/sh -c 'echo $PATH'
+
+        docker compose run --rm djangoapp /bin/sh -c 'echo $SECRET_KEY'
+
+Rodando com exec
+
+    # PS: O container deve estar aberto
+    docker exec -it djangoapp sh
+
+    exit  # Para sair
+
+Outra forma: Vamos supor que queira executar scripts
+
+    Em script crie:
+
+        collectstatic.sh:
+
+            #!/bin/sh
+
+            python manage.py collectstatic --noinput
+
+        makemigrations.sh:
+
+            #!/bin/sh
+
+            python manage.py makemigrations --noinput
+
+        migrate.sh:
+
+            #!/bin/sh
+
+            python manage.py migrate --noinput
+
+        manage_runserver.sh:
+
+            #!/bin/sh
+
+            python manage.py runserver 0.0.0.0:8000
+
+        waitpsql.sh:
+
+            #!/bin/sh
+
+            while ! nc -z $POSTGRES_HOST $POSTGRES_PORT; do
+                echo "🟡 Waiting for Postgres Database Startup ($POSTGRES_HOST $POSTGRES_PORT) ..."
+                sleep 2
+            done
+
+            echo "✅ Postgres Database Started Successfully ($POSTGRES_HOST:$POSTGRES_PORT)"
+
+        commands.sh:
+
+            #!/bin/sh
+
+            # O shell irá encerrar a execução do script quando um comando falhar
+            set -e
+
+            while ! nc -z $POSTGRES_HOST $POSTGRES_PORT; do
+            echo "🟡 Waiting for Postgres Database Startup ($POSTGRES_HOST $POSTGRES_PORT) ..."
+            sleep 2
+            done
+
+            echo "✅ Postgres Database Started Successfully ($POSTGRES_HOST:$POSTGRES_PORT)"
+
+            collectstatic.sh
+            makemigrations.sh
+            migrate.sh
+            manage_runserver.sh
+
+    Agra faça o build novamente:
+
+        docker compose up --build
+
+    Por fim:
+
+        docker compose run djangoapp collectstatic.sh
+
+        docker compose run djangoapp manage_runserver.sh
+
+
+PS: Nunca se esqueça de buildar após alterar algo importante
