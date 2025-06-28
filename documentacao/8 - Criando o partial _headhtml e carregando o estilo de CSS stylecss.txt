@@ -1,0 +1,23 @@
+        Criando o partial _head.html e carregando o estilo de CSS style.css
+
+Vamos fazer algumas alterações:
+
+    Em base.html faça:
+
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        {% include "blog/partials/_head.html" %}
+        <body>
+            {% block content %}{% endblock content %}
+        </body>
+        </html>
+
+    Agra em partials, crie o arquivo chamado _head.html e faça nele:
+
+        <head>
+            {% load static %}
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="{% static "blog/css/style.css" %}">
+            <title>TESTE</title>
+        </head>
