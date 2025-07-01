@@ -1,0 +1,33 @@
+            Separando os parciais header, pagination e footer
+
+
+No diretório partials faça:
+
+    Crie os arquivos _header.html, _pagination.html e _footer.html.
+
+    Após isso, por enquanto vamos fazer:
+
+        Em _header.html:
+
+            <h1>Pagination</h1>
+
+        Em _pagination.html:
+
+            <h1>Pagination</h1>
+
+        Em _footer.html:
+
+            <h1>Footer</h1>
+
+Agora em base.html, vamos fazer assim:
+
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    {% include "blog/partials/_head.html" %}
+    <body>
+        {% include "blog/partials/_header.html" %}
+        {% block content %}{% endblock content %}
+        {% include "blog/partials/_pagination.html" %}
+        {% include "blog/partials/_footer.html" %}
+    </body>
+    </html>
