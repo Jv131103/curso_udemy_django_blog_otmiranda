@@ -10,6 +10,13 @@ class MenuLink(models.Model):
     text = models.CharField(max_length=50)
     url_or_path = models.CharField(max_length=2048)
     new_tab = models.BooleanField(default=False)
+    site_setup = models.ForeignKey(
+        'SiteSetup',  # Como já fizemos a migração no Django, o tal nos permite fazer isso
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        default=None
+    )
 
     def __str__(self):
         return self.text

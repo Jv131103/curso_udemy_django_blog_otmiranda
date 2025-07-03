@@ -53,3 +53,5 @@ E em admin.py de site_setup, vamos fazer:
     class SiteSetupAdmin(admin.ModelAdmin):
         list_display = "title", "description",
 
+
+No fim sempre realize migrate quando criar novos models
