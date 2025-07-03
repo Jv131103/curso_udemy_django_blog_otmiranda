@@ -1,4 +1,9 @@
-from django.db import models
+                Criando um campo ImageField para Favicon no Django
+
+
+Em models.py de sitesetup, vamos fazer:
+
+    from django.db import models
 
 
 # Create your models here.
@@ -44,3 +49,35 @@ class SiteSetup(models.Model):
 
     def __str__(self):
         return self.title
+
+Provavelmente, ele deve ter dado esse erro aqui:
+
+    ERRORS:
+    site_setup.SiteSetup.faveicon: (fields.E210) Cannot use ImageField because Pillow is not installed.
+    HINT: Get Pillow at https://pypi.org/project/Pillow/ or run command "python -m pip install Pillow
+
+Para resolver esse erro vamos por parte:
+
+    1 - Em requirements.txt vamos adicionar manualmente o pillow:
+
+        Django>=5.1.7,<5.2
+        psycopg2-binary>=2.9.10,<2.10
+        Pillow>=9.5.0,<9.6
+
+    2 - Agora, vamos buildar o nosso projeto:
+
+        docker compose up --build
+
+Agora, se formos até templates/_head.html, podemos adicionar uma imagem, mas primeiro, adicione-o
+pelo admin.
+
+    <head>
+        {% load static %}
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{% static "blog/css/style.css" %}">
+        {% if site_setup.faveicon %}
+            <link rel="shortcut icon" href="{{ site_setup.faveicon.url }}" type="image/png">
+        {% endif %}
+        <title>TESTE</title>
+    </head>
