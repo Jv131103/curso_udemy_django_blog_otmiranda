@@ -1,0 +1,59 @@
+            Criando os templates necessários para o layout
+
+Vanmos iniciar os nossos htmls que vão cobrir todo o nosso blog
+
+Em templates vamos criar mais dois arquivos dentro de pages:
+
+    page.html:
+
+        {% extends "blog/base.html" %}
+        {% block content %}
+            <h1>PAGE</h1>
+        {% endblock content %}
+
+    post.html
+
+        {% extends "blog/base.html" %}
+        {% block content %}
+            <h1>POST</h1>
+        {% endblock content %}
+
+E agora para vermos, prcisamos mudar nossa views.py e é isso que faremos:
+
+    from django.shortcuts import render
+
+
+    # Create your views here.
+    def index(request):
+        return render(
+            request,
+            'blog/pages/index.html'
+        )
+
+
+    def page(request):
+        return render(
+            request,
+            'blog/pages/page.html'
+        )
+
+
+    def post(request):
+        return render(
+            request,
+            'blog/pages/post.html'
+        )
+
+E por fim, as urls em urls.py:
+
+    from blog.views import index, page, post
+    from django.contrib import admin
+    from django.urls import path
+
+    app_name = "blog"
+
+    urlpatterns = [
+        path("", index, name="index"),
+        path("post/", post, name="post"),
+        path("page/", page, name="page"),
+    ]

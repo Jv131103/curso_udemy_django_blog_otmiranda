@@ -1,0 +1,415 @@
+            Layout do blog pronto e explicado em detalhes
+
+Em views.py, vamos iniciar realizando:
+
+    from django.core.paginator import Paginator
+    from django.shortcuts import render
+
+    posts = list(range(1000))
+
+
+    # Create your views here.
+    def index(request):
+        paginator = Paginator(posts, 9)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        return render(
+            request,
+            'blog/pages/index.html',
+            {
+                "page_obj": page_obj,
+            }
+        )
+
+
+    def page(request):
+        return render(
+            request,
+            'blog/pages/page.html'
+        )
+
+
+    def post(request):
+        return render(
+            request,
+            'blog/pages/post.html'
+        )
+
+
+Agora, em base.html iremos fazer:
+
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    {% include "blog/partials/_head.html" %}
+    <body>
+        <div class="blog-wrapper">
+            {% include "blog/partials/_header.html" %}
+            {% block content %}{% endblock content %}
+            {% include "blog/partials/_pagination.html" %}
+            {% include "blog/partials/_footer.html" %}
+        </div>
+    </body>
+    </html>
+
+Em nosso index, vamos realizar:
+
+    {% extends 'blog/base.html' %}
+
+    {% block content %}
+    <main class="main-content section-wrapper">
+        <div class="section-content-wide">
+        <div class="section-gap">
+
+            <div class="card-grid">
+            {% for i in ""|ljust:"9" %}
+                {% include 'blog/partials/_post-card.html' with i=forloop.counter0 %}
+            {% endfor %}
+            </div>
+
+        </div>
+        </div>
+    </main>
+    {% endblock content %}
+
+Agora em page.html:
+
+    {% extends 'blog/base.html' %}
+
+    {% block content %}
+    <main class="main-content section-wrapper">
+        <div class="section-content-narrow">
+        <div class="section-gap">
+            <h1 class="center">A page 😍</h1>
+            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Praesentium eaque placeat, optio architecto dignissimos est iure ipsum, iste doloribus dolorum nostrum veniam aspernatur adipisci eos et ab facilis, fugit labore!</p>
+        </div>
+        </div>
+    </main>
+    {% endblock content %}
+
+Em post.html, vamos alterar:
+
+    {% extends 'blog/base.html' %}
+
+    {% block content %}
+    <main class="main-content single-post section-wrapper">
+    <div class="single-post-content section-content-narrow">
+        <div class="single-post-gap section-gap">
+        <div class="single-post-cover pb-base">
+            <img loading="lazy" src="https://picsum.photos/1920/1080/?rand=12" alt="Change me">
+        </div>
+
+        <h2 class="single-post-title pb-base center">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        </h2>
+
+        <div class="post-meta pb-base">
+            <div class="post-meta-item">
+            <a class="post-meta-link" href="#">
+                <i class="fa-solid fa-user"></i>
+                <span>
+                Author Full Name
+                </span>
+            </a>
+            </div>
+            <div class="post-meta-item">
+            <a class="post-meta-link" href="#">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>
+                20/04/2023
+                </span>
+            </a>
+            </div>
+            <div class="post-meta-item">
+            <a class="post-meta-link" href="#">
+                <i class="fa-solid fa-tag"></i>
+                <span>
+                Categoria
+                </span>
+            </a>
+            </div>
+        </div>
+
+        <p class="single-post-excerpt pb-base">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Labore, vero
+            fugiat eum perferendis accusamus enim quos obcaecati. Voluptates a vel
+            obcaecati ipsa in dignissimos facere odio et, ab provident assumenda!
+        </p>
+
+        <div class="separator"></div>
+
+        <div class="single-post-content">
+            {% include 'blog/partials/_temp.html' %} 
+        
+            <div class="post-tags">
+            <span>Tags: </span>
+
+            <a class="post-tag-link" href="#">
+                <i class="fa-solid fa-link"></i>
+                <span>Testando</span>
+            </a>
+
+            <a class="post-tag-link" href="#">
+                <i class="fa-solid fa-link"></i>
+                <span>Atenção</span>
+            </a>
+
+            <a class="post-tag-link" href="#">
+                <i class="fa-solid fa-link"></i>
+                <span>Obrigado</span>
+            </a>
+
+            <a class="post-tag-link" href="#">
+                <i class="fa-solid fa-link"></i>
+                <span>Educação</span>
+            </a>
+
+            <a class="post-tag-link" href="#">
+                <i class="fa-solid fa-link"></i>
+                <span>Python</span>
+            </a>
+
+            </div>
+            
+        </div>
+        
+        </div>
+    </div>
+    </main>
+
+    {% endblock content %}
+
+Agora, vamos para nosso partials.
+
+Após isso vamos criar um arquivo chamado _post-card.html e vamos digitar o seguinte:
+
+    <article class="card">
+    
+    <div class="card-cover-wrapper">
+        <a href="#" class="card-cover-link">
+        <img 
+            class="card-cover"
+            loading="lazy"
+            src="https://picsum.photos/745/419/?rand=2{{ i }}" 
+            alt="Change me"
+        >
+        </a>
+    </div>
+
+    <div class="card-text-wrapper">
+        <div class="card-title-wrapper">
+        <h2 class="card-title">
+            <a href="#" class="card-title-link">
+            Lorem ipsum dolor sit amet.
+            </a>
+        </h2>
+        </div>
+
+        <div class="card-content-wrapper">
+        <p class="card-content">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur nulla omnis, maiores tempore pariatur a obcaecati atque deserunt reiciendis quam! 
+        </p>
+
+        <div class="card-actions">
+            <a class="card-action-link" href="#">
+            <span>Read</span>
+            <i class="fa-solid fa-circle-arrow-right"></i>
+            </a>
+        </div>
+        </div>
+    </div>
+
+    </article>
+
+
+E agora em _footer.html:
+
+    <footer class="footer section-wrapper">
+    <div class="section-content-wide">
+        <div class="section-gap">
+        <div class="center">
+            <a href="#"> © Blog do Luiz - Todos os direitos reservados. </a>
+        </div>
+        </div>
+    </div>
+    </footer>
+
+Em _head.html:
+
+    <head>
+        {% load static %}
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="stylesheet" href="{% static 'blog/css/remedy.css' %}">
+        <link rel="stylesheet" href="{% static 'blog/css/style.css' %}">
+
+        {% if site_setup.favicon %}
+        <link rel="shortcut icon" href="{{ site_setup.favicon.url }}" type="image/png">
+        {% endif %}
+
+        <title>TESTANDO</title>
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    </head>
+
+E também em _header.html:
+
+    <header class="header section-wrapper">
+    <div class="section-content-wide">
+        <div class="section-gap">
+
+        <h1 class="blog-title center pb-base">
+            <a class="blog-link" href="/"> Blog do Luiz </a>
+        </h1>
+        
+        <p class="blog-description pb-base center">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolores ipsam
+            neque explicabo sequi, voluptas saepe porro atque provident, reiciendis
+            natus harum labore nisi eum consectetur cumque minima dolorem adipisci?
+            Dolores?
+        </p>
+
+        <div class="search pb-base center">
+            <form class="search-form" action="#" method="get">
+            <div class="search-content">
+                <label class="sr-only" id="search-label" for="search-input">Search</label>
+                <input
+                class="search-input"
+                type="search"
+                name="search"
+                id="search-input"
+                placeholder="Search"
+                value="Non risu potius quam oratione eiciendum? Quo pleb "
+                >
+                <button class="search-btn" type="submit" aria-labelledby="search-label">
+                <i class="fa fa-search"></i>
+                </button>
+            </div>
+            </form>
+        </div>
+
+        <nav class="menu">
+            <ul class="menu-items">
+            <li class="menu-item">
+                <a class="menu-link" href="/post/">Post</a>
+            </li>
+            <li class="menu-item">
+                <a class="menu-link" href="/page/">Page</a>
+            </li>
+            <li class="menu-item">
+                <a class="menu-link" href="#">About us</a>
+            </li>
+            <li class="menu-item">
+                <a class="menu-link" href="#">Contact</a>
+            </li>
+            <li class="menu-item">
+                <a class="menu-link" href="#">Support</a>
+            </li>
+            </ul>
+        </nav>
+        
+        </div>
+    </div>
+    </header>
+
+E por fim, em _pagination.html:
+
+    {% if page_obj and page_obj.has_other_pages %}
+
+    <div class="separator"></div>
+
+    <div class="pagination-wrapper section-wrapper">
+    <div class="pagination-content section-content-wide">
+        <div class="pagination-gap section-gap">
+
+        <nav class="pagination-links" aria-label="Pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                <a title="Page 1" aria-label="Page 1" href="?page=1{{ search_url }}">
+                    <i class="fa-solid fa-backward-fast"></i>
+                </a>
+                <a title="Page {{ page_obj.previous_page_number }}" aria-label="Page {{ page_obj.previous_page_number }}" href="?page={{ page_obj.previous_page_number }}{{ search_url }}">
+                    <i class="fa-solid fa-circle-chevron-left"></i>
+                </a>
+                {% else %}
+                <span title="Current page" aria-current="page">
+                    <i class="fa-solid fa-circle-chevron-up"></i>
+                </span>          
+                {% endif %}
+
+                <span class="current" title="Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}" aria-current="page">
+                {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                <a title="Page {{ page_obj.next_page_number }}" aria-label="Page {{ page_obj.next_page_number }}" href="?page={{ page_obj.next_page_number }}{{ search_url }}">
+                    <i class="fa-solid fa-circle-chevron-right"></i>
+                </a>
+                <a title="Page {{ page_obj.paginator.num_pages }}" aria-label="Page {{ page_obj.paginator.num_pages }}" href="?page={{ page_obj.paginator.num_pages }}{{ search_url }}">
+                    <i class="fa-solid fa-forward-fast"></i>
+                </a>
+                {% else %}
+                <span title="Current page" aria-current="page">
+                    <i class="fa-solid fa-circle-chevron-up"></i>
+                </span>          
+                {% endif %}
+            </span>
+        </nav>
+        
+        </div>
+    </div>
+    </div>
+
+    {% endif %}
+
+E para concluir, vamos criar um arquivo html temporário, apenas para visualização. Vamos
+chamá-lo de _temp.html e vamos codificar:
+
+    {% if page_obj and page_obj.has_other_pages %}
+
+    <div class="separator"></div>
+
+    <div class="pagination-wrapper section-wrapper">
+    <div class="pagination-content section-content-wide">
+        <div class="pagination-gap section-gap">
+
+        <nav class="pagination-links" aria-label="Pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                <a title="Page 1" aria-label="Page 1" href="?page=1{{ search_url }}">
+                    <i class="fa-solid fa-backward-fast"></i>
+                </a>
+                <a title="Page {{ page_obj.previous_page_number }}" aria-label="Page {{ page_obj.previous_page_number }}" href="?page={{ page_obj.previous_page_number }}{{ search_url }}">
+                    <i class="fa-solid fa-circle-chevron-left"></i>
+                </a>
+                {% else %}
+                <span title="Current page" aria-current="page">
+                    <i class="fa-solid fa-circle-chevron-up"></i>
+                </span>          
+                {% endif %}
+
+                <span class="current" title="Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}" aria-current="page">
+                {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                <a title="Page {{ page_obj.next_page_number }}" aria-label="Page {{ page_obj.next_page_number }}" href="?page={{ page_obj.next_page_number }}{{ search_url }}">
+                    <i class="fa-solid fa-circle-chevron-right"></i>
+                </a>
+                <a title="Page {{ page_obj.paginator.num_pages }}" aria-label="Page {{ page_obj.paginator.num_pages }}" href="?page={{ page_obj.paginator.num_pages }}{{ search_url }}">
+                    <i class="fa-solid fa-forward-fast"></i>
+                </a>
+                {% else %}
+                <span title="Current page" aria-current="page">
+                    <i class="fa-solid fa-circle-chevron-up"></i>
+                </span>          
+                {% endif %}
+            </span>
+        </nav>
+        
+        </div>
+    </div>
+    </div>
+
+    {% endif %}

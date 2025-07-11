@@ -1,5 +1,5 @@
                 Iniciando nosso CSS + Reset de CSS
-                            e
+                                e
         Montei a base do nosso CSS - Vou te explicar os detalhes
 
 
