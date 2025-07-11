@@ -1,0 +1,109 @@
+        Usando field validators, sobrescrevendo save do Model e redimensionando imagens
+
+
+Na raiz em djangoapp, vamos criar uma pasta chamada utils, pois ela irá servir como
+utilidades em nossos projetos.
+
+    Dentro dele, crie um arquivo chamado model_validators.py e dentro dele, vamos fazer o
+    seguinte:
+
+        from django.core.exceptions import ValidationError
+
+
+        def validate_png(image):
+            if not image.name.lower().endswith(".png"):
+                raise ValidationError("Imagem deve ser do tipo .png")
+
+
+    Ainda em utils, vamos redimensionar a imagem usando Pillow. Para isso, vamos criar
+    o arquivo chamado images.py e vamos fazer o seguinte:
+
+        from pathlib import Path
+
+        from django.conf import settings
+        from PIL import Image
+
+
+        def resize_image(image_django, new_width=800, optimize=True, quality=60):
+            image_path = Path(settings.MEDIA_ROOT / image_django.name).resolve()
+            image_pillow = Image.open(image_path)
+            original_width, original_height = image_pillow.size
+
+            if original_width < new_width:
+                image_pillow.close()
+                return image_pillow
+
+            new_height = round(new_width * original_height / original_width)
+
+            new_image = image_pillow.resize((new_width, new_height), Image.LANCZOS)
+            new_image.save(
+                image_path,
+                optimize=optimize,
+                quality=quality
+            )
+
+            return new_image
+
+
+Em models de site_setup, vamos atualizar da seguinte maneira:
+
+    from typing import Iterable
+
+    from django.db import models
+    from utils.images import resize_image
+    from utils.model_validators import validate_png
+
+
+    # Create your models here.
+    class MenuLink(models.Model):
+        class Meta:
+            verbose_name = "Menu Link"
+            verbose_name_plural = "Menu Links"
+
+        text = models.CharField(max_length=50)
+        url_or_path = models.CharField(max_length=2048)
+        new_tab = models.BooleanField(default=False)
+        site_setup = models.ForeignKey(
+            'SiteSetup',  # Como já fizemos a migração no Django, o tal nos permite fazer isso
+            on_delete=models.CASCADE,
+            blank=True,
+            null=True,
+            default=None
+        )
+
+        def __str__(self):
+            return self.text
+
+
+    class SiteSetup(models.Model):
+        class Meta:
+            verbose_name = "Setup"
+            verbose_name_plural = "Setup"
+
+        title = models.CharField(max_length=65)
+        description = models.CharField(max_length=255)
+        show_header = models.BooleanField(default=True)
+        show_search = models.BooleanField(default=True)
+        show_menu = models.BooleanField(default=True)
+        show_description = models.BooleanField(default=True)
+        show_pagination = models.BooleanField(default=True)
+        show_footer = models.BooleanField(default=True)
+
+        faveicon = models.ImageField(
+            upload_to='assets/favicon/%Y/%m/',
+            blank=True,
+            default="",
+            validators=[validate_png]
+        )
+
+        def save(self, *args, **kwargs):
+            current_favicon_name = str(self.faveicon.name)
+            super().save(*args, **kwargs)
+            favicon_changed = False
+            if self.faveicon:
+                favicon_changed = current_favicon_name != self.faveicon.name
+            if favicon_changed:
+                resize_image(self.faveicon, 32)
+
+        def __str__(self):
+            return self.title
