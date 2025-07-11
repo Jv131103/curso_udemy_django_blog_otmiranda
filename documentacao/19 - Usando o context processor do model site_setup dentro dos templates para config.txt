@@ -1,0 +1,115 @@
+    Usando o context processor do model site_setup dentro dos templates para config
+
+Em templates/blog/partial vamos fazer as seguintes mudanças:
+
+    . _footer.html:
+
+        <footer class="footer section-wrapper">
+            <div class="section-content-wide">
+                <div class="section-gap">
+                <div class="center">
+                    <a href="#"> 
+                    © {% now "Y" %} {{ site_setup.title }} - Todos os direitos reservados. 
+                    </a>
+                </div>
+                </div>
+            </div>
+        </footer>
+
+    . _header.html:
+
+        <header class="header section-wrapper">
+        <div class="section-content-wide">
+            <div class="section-gap">
+
+            <h1 class="blog-title center pb-base">
+                <a class="blog-link" href="/"> {{ site_setup.title }} </a>
+            </h1>
+            
+            {% if site_setup.show_description %}
+                <p class="blog-description pb-base center">
+                {{ site_setup.description }}
+                </p>
+            {% endif %}
+
+            {% if site_setup.show_search %}
+                <div class="search pb-base center">
+                <form class="search-form" action="#" method="get">
+                    <div class="search-content">
+                    <label class="sr-only" id="search-label" for="search-input">Search</label>
+                    <input
+                        class="search-input"
+                        type="search"
+                        name="search"
+                        id="search-input"
+                        placeholder="Search"
+                        value="Non risu potius quam oratione eiciendum? Quo pleb "
+                    >
+                    <button class="search-btn" type="submit" aria-labelledby="search-label">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    </div>
+                </form>
+                </div>
+            {% endif %}
+
+            {% if site_setup.show_menu %}
+                <nav class="menu">
+                <ul class="menu-items">
+                    {% for link in site_setup.menulink_set.all %}
+                        <li class="menu-item">
+                        {% if link.new_tab %}
+                            <a target="_blank" class="menu-link" href="{{ link.url_or_path }}">{{ link.text }}</a>
+                        {% else %}
+                            <a class="menu-link" href="{{ link.url_or_path }}">{{ link.text }}</a>
+                        {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+                </nav>
+            {% endif %}
+            
+            </div>
+        </div>
+        </header>
+
+    . _head.html:
+
+        <head>
+            {% load static %}
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+            <link rel="stylesheet" href="{% static 'blog/css/remedy.css' %}">
+            <link rel="stylesheet" href="{% static 'blog/css/style.css' %}">
+
+            {% if site_setup.favicon %}
+            <link rel="shortcut icon" href="{{ site_setup.favicon.url }}" type="image/png">
+            {% endif %}
+
+            <title>{{ site_setup.title }}</title>
+
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        </head>
+
+    . base.html:
+
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        {% include "blog/partials/_head.html" %}
+        <body>
+            <div class="blog-wrapper">
+                {% if site_setup.show_header %}
+                    {% include "blog/partials/_header.html" %}
+                {% endif %}
+                {% block content %}{% endblock content %}
+                {% if site_setup.show_pagination %}
+                    {% include "blog/partials/_pagination.html" %}
+                {% endif %}
+                {% if site_setup.footer %}
+                    {% include "blog/partials/_footer.html" %}
+                {% endif %}
+            </div>
+        </body>
+        </html>
