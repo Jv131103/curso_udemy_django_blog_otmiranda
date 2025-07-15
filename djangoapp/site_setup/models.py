@@ -19,7 +19,8 @@ class MenuLink(models.Model):
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        default=None
+        default=None,
+        related_name='menu'
     )
 
     def __str__(self):
