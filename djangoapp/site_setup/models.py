@@ -1,5 +1,3 @@
-from typing import Iterable
-
 from django.db import models
 from utils.images import resize_image
 from utils.model_validators import validate_png
