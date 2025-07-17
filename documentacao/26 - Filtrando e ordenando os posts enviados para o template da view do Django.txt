@@ -1,0 +1,119 @@
+        Filtrando e ordenando os posts enviados para o template da view do Django
+
+Em views de Blog, vamos realizar:
+
+    from django.core.paginator import Paginator
+    from django.shortcuts import render
+    from blog.models import Post
+
+
+    PER_PAGE = 9
+
+
+    # Create your views here.
+    def index(request):
+        posts = Post.objects.all().filter(is_published=True).order_by("-id")
+
+        paginator = Paginator(posts, PER_PAGE)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        return render(
+            request,
+            'blog/pages/index.html',
+            {
+                "page_obj": page_obj,
+            }
+        )
+
+
+    def page(request):
+        return render(
+            request,
+            'blog/pages/page.html'
+        )
+
+
+    def post(request):
+        return render(
+            request,
+            'blog/pages/post.html'
+        )
+
+
+E template/pages/index.html, vamos fazer:
+
+    {% extends 'blog/base.html' %}
+
+    {% block content %}
+    <main class="main-content section-wrapper">
+        <div class="section-content-wide">
+        <div class="section-gap">
+
+            <div class="card-grid">
+            {% for post in page_obj %}
+                {% include 'blog/partials/_post-card.html' with i=forloop.counter0 %}
+            {% endfor %}
+            </div>
+
+        </div>
+        </div>
+    </main>
+    {% endblock content %}
+
+E em template/pages/_post-card.html, vamos atualizar:
+
+    <article class="card">
+    
+    {% if post.cover %}
+        <div class="card-cover-wrapper">
+        <a href="{% url "blog:post" post.slug %}" class="card-cover-link">
+            <img 
+            class="card-cover"
+            loading="lazy"
+            src="{{ post.cover.url }}" 
+            alt="Cover do post {{ post.title }}"
+            >
+        </a>
+        </div>
+    {% endif %}
+
+    <div class="card-text-wrapper">
+        <div class="card-title-wrapper">
+        <h2 class="card-title">
+            <a href="{% url "blog:post" post.slug %}" class="card-title-link">
+            {{ post.title }}
+            </a>
+        </h2>
+        </div>
+
+        <div class="card-content-wrapper">
+        <p class="card-content">
+            {{ post.except }}
+        </p>
+
+        <div class="card-actions">
+            <a class="card-action-link" href="{% url "blog:post" post.slug %}">
+            <span>Read</span>
+            <i class="fa-solid fa-circle-arrow-right"></i>
+            </a>
+        </div>
+        </div>
+    </div>
+
+    </article>
+
+
+E por fim, em urls.py de blog, vamos alterar:
+
+    from blog.views import index, page, post
+    from django.contrib import admin
+    from django.urls import path
+
+    app_name = "blog"
+
+    urlpatterns = [
+        path("", index, name="index"),
+        path("post/<slug:slug>/", post, name="post"),
+        path("page/", page, name="page"),
+    ]
+
