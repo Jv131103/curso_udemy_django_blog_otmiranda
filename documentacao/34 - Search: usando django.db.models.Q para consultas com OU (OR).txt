@@ -1,0 +1,204 @@
+        Search: usando django.db.models.Q para consultas com OU (OR)
+
+
+Em views.py de blog, vamos realizar:
+
+    from blog.models import Post
+    from django.core.paginator import Paginator
+    from django.db.models import Q
+    from django.shortcuts import render
+
+    PER_PAGE = 9
+
+
+    def index(request):
+        posts = Post.objects.get_published()
+
+        paginator = Paginator(posts, PER_PAGE)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+
+        return render(
+            request,
+            'blog/pages/index.html',
+            {
+                'page_obj': page_obj,
+            }
+        )
+
+
+    def created_by(request, author_pk):
+        posts = Post.objects.get_published()\
+            .filter(created_by__pk=author_pk)
+
+        paginator = Paginator(posts, PER_PAGE)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+
+        return render(
+            request,
+            'blog/pages/index.html',
+            {
+                'page_obj': page_obj,
+            }
+        )
+
+
+    def category(request, slug):
+        posts = Post.objects.get_published()\
+            .filter(category__slug=slug)
+
+        paginator = Paginator(posts, PER_PAGE)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+
+        return render(
+            request,
+            'blog/pages/index.html',
+            {
+                'page_obj': page_obj,
+            }
+        )
+
+
+    def tag(request, slug):
+        posts = Post.objects.get_published()\
+            .filter(tags__slug=slug)
+
+        paginator = Paginator(posts, PER_PAGE)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+
+        return render(
+            request,
+            'blog/pages/index.html',
+            {
+                'page_obj': page_obj,
+            }
+        )
+
+
+    def search(request):
+        search_value = request.GET.get('search', '').strip()
+
+        posts = (
+            Post.objects.get_published()
+            .filter(
+                Q(title__icontains=search_value) |
+                Q(excerpt__icontains=search_value) |
+                Q(content__icontains=search_value)
+            )[:PER_PAGE]
+        )
+
+        return render(
+            request,
+            'blog/pages/index.html',
+            {
+                'page_obj': posts,
+                'search_value': search_value,
+            }
+        )
+
+
+    def page(request, slug):
+        return render(
+            request,
+            'blog/pages/page.html',
+            {
+                # 'page_obj': page_obj,
+            }
+        )
+
+
+    def post(request, slug):
+        post = (
+            Post.objects.get_published()
+            .filter(slug=slug)
+            .first()
+        )
+
+        return render(
+            request,
+            'blog/pages/post.html',
+            {
+                'post': post,
+            }
+        )
+
+Depois, em urls.py de blog vamos adicionar:
+
+    from blog.views import category, created_by, index, page, post, search, tag
+    from django.contrib import admin
+    from django.urls import path
+
+    app_name = "blog"
+
+    urlpatterns = [
+        path("", index, name="index"),
+        path("post/<slug:slug>/", post, name="post"),
+        path("page/<slug:slug>/", page, name="page"),
+        path("created_by/<int:author_pk>/", created_by, name="created_by"),
+        path("category/<slug:slug>/", category, name="category"),
+        path("tag/<slug:slug>/", tag, name="tag"),
+        path("search/", search, name="search"),
+    ]
+
+
+Em _header.html:
+
+    <header class="header section-wrapper">
+    <div class="section-content-wide">
+        <div class="section-gap">
+
+        <h1 class="blog-title center pb-base">
+            <a class="blog-link" href="/">{{ site_setup.title }}</a>
+        </h1>
+        
+        {% if site_setup.show_description %}
+            <p class="blog-description pb-base center">{{ site_setup.description }}</p>
+        {% endif %}
+
+        {% if site_setup.show_search %}
+            <div class="search pb-base center">
+            <form class="search-form" action="{% url 'blog:search' %}" method="get">
+                <div class="search-content">
+                <label class="sr-only" id="search-label" for="search-input">Search</label>
+                <input
+                    class="search-input"
+                    type="search"
+                    name="search"
+                    id="search-input"
+                    placeholder="Search"
+                    value="{{ search_value }}"
+                >
+                <button class="search-btn" type="submit" aria-labelledby="search-label">
+                    <i class="fa fa-search"></i>
+                </button>
+                </div>
+            </form>
+            </div>
+        {% endif %}
+
+        {% if site_setup.show_menu %}
+            <nav class="menu">
+            <ul class="menu-items">
+                {% for link in site_setup.menu.all %}
+                <li class="menu-item">
+                    {% if link.new_tab %}
+                    <a target="_blank" class="menu-link" href="{{ link.url_or_path }}">
+                        {{ link.text }}
+                    </a>
+                {% else %}
+                    <a class="menu-link" href="{{ link.url_or_path }}">
+                        {{ link.text }}
+                    </a>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            </nav>
+        {% endif %}
+        
+        </div>
+    </div>
+    </header>

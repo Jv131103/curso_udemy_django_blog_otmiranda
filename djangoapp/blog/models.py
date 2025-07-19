@@ -1,9 +1,9 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.urls import reverse
 from django_summernote.models import AbstractAttachment
 from utils.images import resize_image
 from utils.rands import new_slugfy
-from django.urls import reverse
 
 
 class PostAttachment(AbstractAttachment):
@@ -89,6 +89,11 @@ class Page(models.Model):
         if not self.slug:
             self.slug = new_slugfy(self.title)
         return super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        if not self.is_published:
+            return reverse('blog:index')
+        return reverse('blog:page', args=(self.slug,))
 
     def __str__(self) -> str:
         return self.title
