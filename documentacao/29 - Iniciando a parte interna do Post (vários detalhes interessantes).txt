@@ -1,0 +1,232 @@
+        Iniciando a parte interna do Post (vários detalhes interessantes)
+
+Na views.py de blog, vamos editar:
+
+    from blog.models import Post
+    from django.core.paginator import Paginator
+    from django.shortcuts import render
+
+    PER_PAGE = 9
+
+
+    # Create your views here.
+    def index(request):
+        posts = Post.objects.get_published()
+
+        paginator = Paginator(posts, PER_PAGE)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        return render(
+            request,
+            'blog/pages/index.html',
+            {
+                "page_obj": page_obj,
+            }
+        )
+
+
+    def page(request):
+        return render(
+            request,
+            'blog/pages/page.html'
+        )
+
+
+    def post(request, slug):
+        return render(
+            request,
+            'blog/pages/post.html'
+        )
+
+Agora em templates/pages/post.html, vamos editar:
+
+    {% extends 'blog/base.html' %} 
+
+    {% block content %}
+    <main class="main-content single-post section-wrapper">
+    <div class="single-post-content section-content-narrow">
+        <div class="single-post-gap section-gap">
+
+        {% if post.cover and post.cover_in_post_content %}
+            <div class="single-post-cover pb-base">
+            <img loading="lazy" src="{{ post.cover.url }}" alt="{{ post.title }}">
+            </div>
+        {% endif %}
+
+        <h2 class="single-post-title pb-base center">
+            {{ post.title }}
+        </h2>
+        <div class="post-meta pb-base">
+            <div class="post-meta-item">
+            <a class="post-meta-link" href="{% url "blog:created_by" post.created_by.pk %}">
+                <i class="fa-solid fa-user"></i>
+                <span>
+                {% if post.created_by.first_name %}
+                    {{ post.created_by.first_name }}
+                    {{ post.created_by.last_name }}
+                {% else %}
+                    {{ post.created_by.username }}
+                {% endif %}
+                </span>
+            </a>
+            </div>
+            <div class="post-meta-item">
+            <span class="post-meta-link">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>
+                20/04/2023
+                </span>
+            </span>
+            </div>
+            
+            {% if post.category %}
+            <div class="post-meta-item">
+            <a class="post-meta-link" href="{% url "blog:category" post.category.slug %}">
+                <i class="fa-solid fa-tag"></i>
+                <span>
+                {{ post.category.name }}
+                </span>
+            </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <p class="single-post-excerpt pb-base">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Labore, vero
+            fugiat eum perferendis accusamus enim quos obcaecati. Voluptates a vel
+            obcaecati ipsa in dignissimos facere odio et, ab provident assumenda!
+        </p>
+
+        <div class="separator"></div>
+
+        <div class="single-post-content">
+            {% include 'blog/partials/_temp.html' %} 
+        
+            <div class="post-tags">
+            <span>Tags: </span>
+
+            <a class="post-tag-link" href="#">
+                <i class="fa-solid fa-link"></i>
+                <span>Testando</span>
+            </a>
+
+            <a class="post-tag-link" href="#">
+                <i class="fa-solid fa-link"></i>
+                <span>Atenção</span>
+            </a>
+
+            <a class="post-tag-link" href="#">
+                <i class="fa-solid fa-link"></i>
+                <span>Obrigado</span>
+            </a>
+
+            <a class="post-tag-link" href="#">
+                <i class="fa-solid fa-link"></i>
+                <span>Educação</span>
+            </a>
+
+            <a class="post-tag-link" href="#">
+                <i class="fa-solid fa-link"></i>
+                <span>Python</span>
+            </a>
+
+            </div>
+            
+        </div>
+        
+        </div>
+    </div>
+    </main>
+
+    {% endblock content %}
+
+Agora, em urls.py de Blog:
+
+    from blog.views import category, created_by, index, page, post
+    from django.contrib import admin
+    from django.urls import path
+
+    app_name = "blog"
+
+    urlpatterns = [
+        path("", index, name="index"),
+        path("post/<slug:slug>/", post, name="post"),
+        path("page/<slug:slug>/", page, name="page"),
+        path("created_by/<int:author_pk>/", created_by, name="created_by"),
+        path("category/<slug:slug>/", category, name="category"),
+    ]
+
+E em views.py de blog:
+
+    from blog.models import Post
+    from django.core.paginator import Paginator
+    from django.shortcuts import render
+
+    PER_PAGE = 9
+
+
+    # Create your views here.
+    def index(request):
+        posts = Post.objects.get_published()
+
+        paginator = Paginator(posts, PER_PAGE)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        return render(
+            request,
+            'blog/pages/index.html',
+            {
+                "page_obj": page_obj,
+            }
+        )
+
+
+    def created_by(request, author_pk):
+        posts = Post.objects.get_published().filter(created_by__pk=author_pk)
+
+        paginator = Paginator(posts, PER_PAGE)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        return render(
+            request,
+            'blog/pages/index.html',
+            {
+                "page_obj": page_obj,
+            }
+        )
+
+
+    def category(request, slug):
+        posts = Post.objects.get_published().filter(category__slug=slug)
+
+        paginator = Paginator(posts, PER_PAGE)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        return render(
+            request,
+            'blog/pages/index.html',
+            {
+                "page_obj": page_obj,
+            }
+        )
+
+
+    def page(request, slug):
+        return render(
+            request,
+            'blog/pages/page.html'
+        )
+
+
+    def post(request, slug):
+        post = Post.objects.get_published().filter(slug=slug).first()
+
+        return render(
+            request,
+            'blog/pages/post.html',
+            {
+                "post": post
+            }
+        )
+
+PS: Crie um novo superusuário e crie com ele novas postagens, para ver as diferenças de cada um.

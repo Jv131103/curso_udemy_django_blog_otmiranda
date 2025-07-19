@@ -11,6 +11,11 @@ Crie o superuser:
     Password: Acessar123@
     Password (again): Acessar123@
 
+Outro usuário criado de teste com super permissão:
+
+    Irineu
+    Iri@neu123456
+
 Com o seu conteiner completo aberto teste o admin em:
 
     http://127.0.0.1:8000/admin/login/?next=/admin/
