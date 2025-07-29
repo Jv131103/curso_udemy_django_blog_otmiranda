@@ -1,0 +1,10 @@
+            Documentação e teoria sobre Class Based Views no Django
+
+
+link documentação: https://docs.djangoproject.com/pt-br/4.2/ref/class-based-views/
+
+function Based Views -> São funções
+
+class Based Views -> São classes
+
+
