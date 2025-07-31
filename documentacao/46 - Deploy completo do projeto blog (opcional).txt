@@ -1,0 +1,435 @@
+                Deploy completo do projeto blog (opcional)
+
+
+Vamos começar iniciando nosso servidor
+
+Depois acessamos ele:
+
+    No meu caso: ssh ubjv@192.168.100.198
+
+Agora vamos começar a configurar:
+
+    1°: Vamos criar a pasta:
+
+        mkdir -p ~/blogrepo blogapp
+
+    2°: Acesse blogrepo:
+
+        cd blogrepo
+
+    3°: crie um beare do git e depois volte para home:
+
+        git init --bare
+
+        ls
+
+        cd ..
+    
+    4°: acesse blogapp:
+
+        git init
+
+        git remote -v  # Se não tiver nada tudo bem
+
+        git remote add blogrepo ~/blogrepo
+
+        git remote -v  # Agora, precisa aparecer
+
+    5°: agora, vamos ao nosso projeto e digitar no terminal dentro dele:
+
+        git remote -v
+
+        # Nesse caso precisa colocar seu usuário e ip do servidor
+        git remote add blogrepo ubjv@192.168.100.198:~/blogrepo
+
+        git push blogrepo main
+
+    6°: Agora, voltando ao nosso servidor em blog, vamos fazer:
+
+        git push blogrepo main
+
+        ls
+
+        git branch
+
+        git branch -m main
+
+        git branch
+
+    7° Agora, vamos configurar o postgres:
+
+        sudo -u postgres psql
+
+        # Aqui, alterer blog_user, "pssWD@123pss" e blog_database são criações minhas
+        # Você pode colocar qualquer outro que não interfera com as já existentes no postgre
+        create role blog_user with login superuser createdb createrole password "pssWD@123pss"
+
+        create database blog_database with owner blog_user
+
+        grant all privileges on database blog_database to blog_user
+
+        \q
+
+        sudo systemctl restart postgresql
+
+        # EM CASO DE ERRO AO ACESSAR SERVIDOR:
+            
+            # 1. Entre no psql como superuser (postgres):
+            
+                sudo -u postgres psql
+
+            # 2. Crie o usuário blog_user com senha:
+
+                CREATE ROLE blog_user WITH LOGIN PASSWORD 'pssWD@123pss';  # Coloque sua senha
+
+            # Se precisar, dê privilégios, por exemplo:
+
+                ALTER ROLE blog_user WITH CREATEDB;
+
+            # 3. Crie o banco e defina o dono:
+
+                CREATE DATABASE blog_database OWNER blog_user;
+
+            # 4. Saia:
+
+                \q
+
+            # 5. Reinicie o PostgreSQL:
+
+                sudo systemctl restart postgresql
+
+            # Teste a conexão: AQUI PODE SERVIR PARA QUALQUER UM
+            # Coloque a senha do seu usuário
+
+                psql -U blog_user -d blog_database -h localhost -W
+
+    8°: Agora precisamos acessar nosso dotenv e pegar um novo. Na pasta de blogapp, vamos iniciar:
+
+        cd dotenv_files/
+
+        ls -a
+
+        cp .env-example .env
+
+        nano .env
+
+            # Crie uma senha para seu django no dotenv do servidor. Remova pontuações se aparecer:
+            python3 -c "import secrets, string; chars = string.ascii_letters + string.digits + string.punctuation.replace('\"','').replace(\"'\",''); print(''.join(secrets.choice(chars) for _ in range(50)))"
+
+            # O dotenv completo do servidor é esse: (PS, coloque a suas configurações)
+            SECRET_KEY="y7KQ.R%vV<4gi=h&UOcJnut))Mq@N]o?x^i3<C}rForr]@VX["
+
+            # 0 False, 1 True
+            DEBUG="0"
+
+            # Comma Separated values
+            ALLOWED_HOSTS="127.0.0.1, localhost, 192.168.100.198"
+
+            DB_ENGINE="django.db.backends.postgresql"
+            POSTGRES_DB="blog_database"
+            POSTGRES_USER="blog_user"
+            POSTGRES_PASSWORD="pssWD@123pss"
+            POSTGRES_HOST="localhost"
+            POSTGRES_PORT="5432"
+
+            # SALVE E SAIA
+
+    9°: Agora, vamos configurar o django:
+
+        cd ~/blogapp
+
+        # PS: Digite o Python com a versão correspondente que instalou no servidor
+        python3.12 -m venv env
+
+        ls
+
+        . env/bin/activate
+
+        pip  install gunicorn
+        pip install --upgrade pip
+        pip install -r djangoapp/requirements.txt
+
+        # Caso dê conflito, altere para a versão mais recente da lib com erro
+
+        python manage.py makemigrations
+        python manage.py migrate
+
+        python manage.py collectstatic
+
+        # Aqui defina o seu superuser
+        python manage.py createsuperuser
+            
+            Usuário (leave blank to use 'ubjv'): ubjv
+            
+            Endereço de email: ubjv@email.com
+
+            Password: ubjv@A123456
+
+
+        python manage.py runserver
+
+    10°: Agora vamos configurar o gunicorn
+
+        ###############################################################################
+        # Replace
+        # blog the name of the gunicorn file you want
+        # ubjv your user name
+        # blogapp the folder name of your project
+        # project the folder name where you find a file called wsgi.py
+        #
+        ###############################################################################
+        # Criando o arquivo blog.socket
+        sudo nano /etc/systemd/system/blog.socket
+
+        ###############################################################################
+        # Conteúdo do arquivo
+        [Unit]
+        Description=gunicorn blog socket
+
+        [Socket]
+        ListenStream=/run/blog.socket
+
+        [Install]
+        WantedBy=sockets.target
+
+        ###############################################################################
+        # Criando o arquivo blog.service
+        sudo nano /etc/systemd/system/blog.service
+
+        ###############################################################################
+        # Conteúdo do arquivo
+        [Unit]
+        Description=Gunicorn daemon (You can change if you want)
+        Requires=blog.socket
+        After=network.target
+
+        [Service]
+        User=ubjv
+        Group=www-data
+        Restart=on-failure
+        # EnvironmentFile=/home/ubjv/blogapp/.env
+        # Aqui você pode alterar o diretório conforme esteja o seu projeto
+        WorkingDirectory=/home/ubjv/blogapp/djangoapp
+        ExecStart=/home/ubjv/blogapp/env/bin/gunicorn \
+                --error-logfile /home/ubjv/blogapp/gunicorn-error-log \
+                --enable-stdio-inheritance \
+                --log-level "debug" \
+                --capture-output \
+                --access-logfile - \
+                --workers 6 \
+                --bind unix:/run/blog.socket \
+                project.wsgi:application
+
+        [Install]
+        WantedBy=multi-user.target
+
+        ###############################################################################
+        # Ativando
+        sudo systemctl start blog.socket
+        sudo systemctl enable blog.socket
+
+        # Checando
+        sudo systemctl status blog.socket
+        curl --unix-socket /run/blog.socket localhost
+        sudo systemctl status blog
+
+        # Restarting
+        sudo systemctl restart blog.service
+        sudo systemctl restart blog.socket
+        sudo systemctl restart blog
+
+        # After changing something
+        sudo systemctl daemon-reload
+
+        # Debugging
+        sudo journalctl -u blog.service
+        sudo journalctl -u blog.socket
+
+    11°: Agora, vamos configurar o Ngix
+
+        # https://www.nginx.com/blog/using-free-ssltls-certificates-from-lets-encrypt-with-nginx/
+        #
+        # REPLACES
+        # 192.168.100.198 = Replace with your domain
+        # /home/ubjv/blogapp/djangoapp = Replace with the path to the folder for the project
+        # /home/ubjv/blogapp/data/web/static = Replace with the path to the folder for static files
+        # /home/ubjv/blogapp/data/web/media = Replace with the path to the folder for media files
+        # blog = Replace with your unix socket name (don't add .socket)
+        # 
+        # Set timezone
+        # List - timedatectl list-timezones
+        # sudo timedatectl set-timezone America/Sao_Paulo
+        #
+        # HTTP
+        server {
+        listen 80;
+        listen [::]:80;
+        server_name 192.168.100.198;
+
+        # Add index.php to the list if you are using PHP
+        index index.html index.htm index.nginx-debian.html index.php;
+        
+        # ATTENTION: /home/ubjv/blogapp/data/web/static
+        location /static {
+            autoindex on;
+            alias /home/ubjv/blogapp/data/web/static;
+        }
+
+        # ATTENTION: /home/ubjv/blogapp/data/web/media 
+        location /media {
+            autoindex on;
+            alias /home/ubjv/blogapp/data/web/media;
+        }
+
+        # ATTENTION: blog
+        location / {
+            proxy_pass http://unix:/run/blog.socket;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+        }
+
+        # deny access to .htaccess files, if Apache's document root
+        # concurs with nginx's one
+        #
+        location ~ /\.ht {
+            deny all;
+        }
+
+        location ~ /\. {
+            access_log off;
+            log_not_found off;
+            deny all;
+        }
+
+        gzip on;
+        gzip_disable "msie6";
+
+        gzip_comp_level 6;
+        gzip_min_length 1100;
+        gzip_buffers 4 32k;
+        gzip_proxied any;
+        gzip_types
+            text/plain
+            text/css
+            text/js
+            text/xml
+            text/javascript
+            application/javascript
+            application/x-javascript
+            application/json
+            application/xml
+            application/rss+xml
+            image/svg+xml;
+
+        access_log off;
+        #access_log  /var/log/nginx/192.168.100.198-access.log;
+        error_log   /var/log/nginx/192.168.100.198-error.log;
+        }    
+
+        # Agora vamos configurar:
+
+            cd /etc/nginx/sites-available/
+
+            ls
+
+            # Copie o Ngix acima montado com as suas edições especiais
+            sudo nano blog
+
+            cd ..
+
+            cd sites-enabled
+
+            ls
+
+            # PS: CASO JÁ TENHA UM IP REGISTRADO AQUI, VOCÊ VAI PRECISAR DELETAR ELE E
+            # ADICIONAR O SEU NOVO DESSE PROJETO
+            # EX
+            ((env) ) ubjv@ubjv-qemu:/etc/nginx/sites-enabled$ ls
+            agenda
+
+            nano agenda
+
+                server {
+                    listen 80;
+                    listen [::]:80;
+                    server_name 192.168.100.198;
+
+                    # Add index.php to the list if you are using PHP
+                    index index.html index.htm index.nginx-debian.html index.php;
+
+                    # ATTENTION: /home/ubjv/agendaapp/static/
+                    location /static {
+                        autoindex on;
+                        alias /home/ubjv/agendaapp/static/;
+                    }
+
+                    # ATTENTION: /home/ubjv/agendaapp/media/ 
+                    location /media {
+                        autoindex on;
+                        alias /home/ubjv/agendaapp/media/;
+                    }
+
+                    # ATTENTION: agenda
+                    location / {
+                        proxy_pass http://unix:/run/agenda.socket;
+                        proxy_http_version 1.1;
+                        proxy_set_header Upgrade $http_upgrade;
+                        proxy_set_header Connection 'upgrade';
+                        proxy_set_header Host $host;
+                        proxy_cache_bypass $http_upgrade;
+                    }
+
+                    # deny access to .htaccess files, if Apache's document root
+                    # concurs with nginx's one
+                    #
+                    location ~ /\.ht {
+                        deny all;
+                    }
+
+                    location ~ /\. {
+                        access_log off;
+                        log_not_found off;
+                            deny all;
+                    }
+
+                    gzip on;
+                    gzip_disable "msie6";
+
+                    gzip_comp_level 6;
+                    gzip_min_length 1100;
+                    gzip_buffers 4 32k;
+                    gzip_proxied any;
+                    gzip_types
+                        text/plain
+                        text/css
+                        text/js
+                        text/xml
+                        text/javascript
+                        application/javascript
+                        application/x-javascript
+                        application/json
+                        application/xml
+                        application/rss+xml
+                        image/svg+xml;
+
+                    access_log off;
+                    #access_log  /var/log/nginx/192.168.100.198-access.log;
+                    error_log   /var/log/nginx/192.168.100.198-error.log;
+                }
+
+        sudo rm agenda
+
+        sudo ln -s /etc/nginx/sites-available/blog /etc/nginx/sites-enabled/blog
+
+        ls
+
+        sudo systemctl restart nginx
+
+    12°: Agora para acessar o site:
+
+        http://192.168.100.198/
+
+        No caso aqui, precisamos acessar o admin e criar tudo corretamente, faça isso e Teste
